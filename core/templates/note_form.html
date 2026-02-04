@@ -1,0 +1,18 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Создать заметку</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+</head>
+    <body class="login-body">
+        <form method="post">
+            <h2>Создать заметку</h2>
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">Сохранить</button>
+            <a href="{% url 'dashboard' %}" class="actions">Назад</a>
+        </form>
+    </body>
+</html>

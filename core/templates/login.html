@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <title>Yakamy — Вход</title>
+        <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+    </head>
+    <body class="login-body">
+
+    <form method="post">
+        {% csrf_token %}
+        <h2>Вход</h2>
+        {{ form.as_p }}
+        <button type="submit">Войти</button>
+    </form>
+
+    </body>
+</html>
+

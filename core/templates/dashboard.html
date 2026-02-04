@@ -1,0 +1,67 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Yakamy</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+</head>
+<body>
+
+<header>
+    <h1>Yakamy</h1>
+    <a href="{% url 'logout' %}" class="btn">Выйти</a>
+</header>
+
+<main>
+    <section>
+        <h2>Заметки <a href="{% url 'create_note' %}" class="btn" style="float:right;">+ Новая</a></h2>
+        <ul>
+        {% for note in notes %}
+            <li>
+                {{ note.title }}
+                <span class="actions">
+                    <a href="{% url 'edit_note' note.id %}">✏️</a>
+                    <a href="{% url 'delete_note' note.id %}">🗑</a>
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+    </section>
+    <section style="display:flex; justify-content:center; align-items:center;">
+        <img src="/static/logo.png" alt="Logo" style="width:120px;">
+    </section>
+    <section>
+        <h2>Задачи <a href="{% url 'create_task' %}" class="btn" style="float:right;">+ Новая</a></h2>
+        <ul>
+        {% for task in tasks %}
+            <li>
+                {{ task.title }} ({{ task.status }})
+                {% if task.due_date %} — {{ task.due_date }}{% endif %}
+                <span class="actions">
+                    <a href="{% url 'edit_task' task.id %}">✏️</a>
+                    <a href="{% url 'delete_task' task.id %}">🗑</a>
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+
+        <h2>Напоминания <a href="{% url 'create_reminder' %}" class="btn" style="float:right;">+ Новое</a></h2>
+        <ul>
+        {% for reminder in reminders %}
+            <li>
+                {{ reminder.text }} — {{ reminder.remind_at }}
+                {% if reminder.due_date %} — {{ reminder.due_date }}{% endif %}
+                <span class="actions">
+                    <a href="{% url 'edit_reminder' reminder.id %}">✏️</a>
+                    <a href="{% url 'delete_reminder' reminder.id %}">🗑</a>
+                </span>
+            </li>
+        {% endfor %}
+        </ul>
+    </section>
+</main>
+
+</body>
+</html>
+

@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Удалить заметку</title>
+    <link rel="stylesheet" href="{% static 'gallery/style.css' %}">
+</head>
+<body class="login-body">
+    <form method="post">
+        <h3>Удалить заметку "{{ note.title }}"?</h3>
+        {% csrf_token %}
+        <button type="submit" class="btn">Да, удалить</button>
+        <a href="{% url 'dashboard' %}" class="actions">Отмена</a>
+    </form>
+</body>
+</html>
