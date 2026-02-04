@@ -29,4 +29,6 @@ urlpatterns = [
 
     path('reminders/<int:reminder_id>/delete/', views.delete_reminder, name='delete_reminder'),
 
+    path('mcp/', views.mcp_create, name='mcp_create'),
+
 ]

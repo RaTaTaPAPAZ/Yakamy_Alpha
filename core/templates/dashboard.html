@@ -10,10 +10,12 @@
 
 <header>
     <h1>Yakamy</h1>
-    <a href="{% url 'logout' %}" class="btn">Выйти</a>
 </header>
 
 <main>
+    <section class="profile_block">
+        <a href="{% url 'logout' %}" class="btn">Выйти</a>
+    </section>
     <section>
         <h2>Заметки <a href="{% url 'create_note' %}" class="btn" style="float:right;">+ Новая</a></h2>
         <ul>
@@ -28,9 +30,26 @@
         {% endfor %}
         </ul>
     </section>
-    <section style="display:flex; justify-content:center; align-items:center;">
-        <img src="/static/logo.png" alt="Logo" style="width:120px;">
+    <section>
+        <h2>Быстрое действие</h2>
+
+        <form method="post" action="{% url 'mcp_create' %}">
+            {% csrf_token %}
+            <input
+                onkeydown="if(event.key==='Enter'){this.form.submit();}"
+                type="text"
+                name="text"
+                placeholder="Напиши: «Напомни завтра купить молоко»"
+                autocomplete="off"
+            >
+            <button type="submit">Создать</button>
+        </form>
+
+        <p style="color: var(--secondary-text); font-size: 0.9rem;">
+            Можно писать обычным текстом: задача, заметка или напоминание
+        </p>
     </section>
+
     <section>
         <h2>Задачи <a href="{% url 'create_task' %}" class="btn" style="float:right;">+ Новая</a></h2>
         <ul>

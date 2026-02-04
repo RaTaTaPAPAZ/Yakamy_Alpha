@@ -7,6 +7,10 @@ from django.shortcuts import get_object_or_404
 from .forms.task_forms import TaskForm
 from .forms.reminder_form import ReminderForm
 
+from core.services.mcp.parser import parse
+from core.services.mcp.intents import IntentType
+
+from .models import Note, Task, Reminder
 
 @login_required
 def dashboard(request):
@@ -131,3 +135,44 @@ def delete_reminder(request, reminder_id):
         return redirect('dashboard')
 
     return render(request, 'reminder_confirm_delete.html', {'task': reminder})
+
+@login_required
+def mcp_create(request):
+    if request.method != 'POST':
+        return redirect('dashboard')
+
+    text = request.POST.get('text', '').strip()
+
+    if not text:
+        return redirect('dashboard')
+
+    result = parse(text)
+
+    intent = result["intent"]
+    data = result["data"]
+
+
+    if intent == IntentType.NOTE:
+        Note.objects.create(
+            user=request.user,
+            title=data.get('title', '')[:255],
+            content=data.get('content', '')
+        )
+
+    elif intent == IntentType.TASK:
+        Task.objects.create(
+            user=request.user,
+            title=data.get('title', '')[:255],
+            description=data.get('description', '')
+        )
+
+    elif intent == IntentType.REMINDER:
+        Reminder.objects.create(
+            user=request.user,
+            text=data.get("text", ""),
+            remind_at=data.get("date")
+        )
+
+
+
+    return redirect('dashboard')

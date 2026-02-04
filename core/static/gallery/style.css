@@ -70,7 +70,7 @@ header h1 {
 /* Главная сетка */
 main {
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-columns: 1fr 3fr 5fr 3fr;
     gap: 2rem;
     padding: 2rem;
 }
@@ -109,6 +109,14 @@ section * {
     z-index: 1;
 }
 
+.profile_block{
+    display: flex;
+    justify-content: center;
+    align-items:start;
+    max-width: max-content;
+    background: var(--bg-color);
+    margin: 0;
+}
 h2 {
     margin-top: 0;
     font-size: 1.4rem;
