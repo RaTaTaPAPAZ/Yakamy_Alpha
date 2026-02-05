@@ -31,4 +31,6 @@ urlpatterns = [
 
     path('mcp/', views.mcp_create, name='mcp_create'),
 
+    path("mcp/clarify/", views.mcp_clarify, name="mcp_clarify"),
+
 ]

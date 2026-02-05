@@ -8,79 +8,133 @@
 </head>
 <body>
 
-<header>
+<header class="topbar">
+    <button class="burger" onclick="toggleSidebar()">☰</button>
     <h1>Yakamy</h1>
 </header>
 
-<main>
-    <section class="profile_block">
-        <a href="{% url 'logout' %}" class="btn">Выйти</a>
-    </section>
-    <section>
-        <h2>Заметки <a href="{% url 'create_note' %}" class="btn" style="float:right;">+ Новая</a></h2>
-        <ul>
-        {% for note in notes %}
-            <li>
-                {{ note.title }}
-                <span class="actions">
-                    <a href="{% url 'edit_note' note.id %}">✏️</a>
-                    <a href="{% url 'delete_note' note.id %}">🗑</a>
-                </span>
-            </li>
-        {% endfor %}
-        </ul>
-    </section>
-    <section>
-        <h2>Быстрое действие</h2>
+<div class="app">
 
-        <form method="post" action="{% url 'mcp_create' %}">
-            {% csrf_token %}
-            <input
-                onkeydown="if(event.key==='Enter'){this.form.submit();}"
-                type="text"
-                name="text"
-                placeholder="Напиши: «Напомни завтра купить молоко»"
-                autocomplete="off"
-            >
-            <button type="submit">Создать</button>
-        </form>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>Аккаунт</span>
+        </div>
 
-        <p style="color: var(--secondary-text); font-size: 0.9rem;">
-            Можно писать обычным текстом: задача, заметка или напоминание
-        </p>
-    </section>
+        <nav class="sidebar-content">
+            <a href="{% url 'logout' %}" class="btn">Выйти</a>
+        </nav>
+    </aside>
 
-    <section>
-        <h2>Задачи <a href="{% url 'create_task' %}" class="btn" style="float:right;">+ Новая</a></h2>
-        <ul>
-        {% for task in tasks %}
-            <li>
-                {{ task.title }} ({{ task.status }})
-                {% if task.due_date %} — {{ task.due_date }}{% endif %}
-                <span class="actions">
-                    <a href="{% url 'edit_task' task.id %}">✏️</a>
-                    <a href="{% url 'delete_task' task.id %}">🗑</a>
-                </span>
-            </li>
-        {% endfor %}
-        </ul>
+    <!-- OVERLAY -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
-        <h2>Напоминания <a href="{% url 'create_reminder' %}" class="btn" style="float:right;">+ Новое</a></h2>
-        <ul>
-        {% for reminder in reminders %}
-            <li>
-                {{ reminder.text }} — {{ reminder.remind_at }}
-                {% if reminder.due_date %} — {{ reminder.due_date }}{% endif %}
-                <span class="actions">
-                    <a href="{% url 'edit_reminder' reminder.id %}">✏️</a>
-                    <a href="{% url 'delete_reminder' reminder.id %}">🗑</a>
-                </span>
-            </li>
-        {% endfor %}
-        </ul>
-    </section>
-</main>
+    <!-- MAIN -->
+    <main class="dashboard">
+
+        <!-- NOTES -->
+        <section>
+            <h2>
+                Заметки
+                <a href="{% url 'create_note' %}" class="btn small">+ Новая</a>
+            </h2>
+
+            <ul>
+                {% for note in notes %}
+                    <li>
+                        {{ note.title }}
+                        <span class="actions">
+                            <a href="{% url 'edit_note' note.id %}">✏️</a>
+                            <a href="{% url 'delete_note' note.id %}">🗑</a>
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="empty">Заметок пока нет</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <!-- MCP -->
+        <section class="mcp">
+            <h2>MCP</h2>
+
+            {% if request.session.mcp %}
+                {% if request.session.mcp.question %}
+                    <div class="mcp_message">
+                        {{ request.session.mcp.question }}
+                    </div>
+                {% endif %}
+            {% endif %}
+
+            <form method="post"
+                  action="{% if request.session.mcp %}{% url 'mcp_clarify' %}{% else %}{% url 'mcp_create' %}{% endif %}">
+                {% csrf_token %}
+
+                <input
+                    type="text"
+                    name="{% if request.session.mcp %}answer{% else %}text{% endif %}"
+                    placeholder="Напомни завтра купить хлеб"
+                    autocomplete="off"
+                    class="{% if request.session.mcp %}mcp-active{% endif %}"
+                >
+
+                <button type="submit">Отправить</button>
+            </form>
+        </section>
+
+        <!-- REMINDERS -->
+        <section>
+            <h2>
+                Напоминания
+            </h2>
+
+            <ul>
+                {% for reminder in reminders %}
+                    <li>
+                        {{ reminder.text }}
+                        <small>
+                            {{ reminder.remind_at|date:"d.m.Y H:i" }}
+                        </small>
+                        <span class="actions">
+                            <a href="{% url 'delete_reminder' reminder.id %}">🗑</a>
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="empty">Напоминаний пока нет</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <!-- TASKS -->
+        <section>
+            <h2>
+                Задачи
+                <a href="{% url 'create_task' %}" class="btn small">+ Новая</a>
+            </h2>
+
+            <ul>
+                {% for task in tasks %}
+                    <li>
+                        {{ task.title }}
+                        <span class="actions">
+                            <a href="{% url 'edit_task' task.id %}">✏️</a>
+                            <a href="{% url 'delete_task' task.id %}">🗑</a>
+                        </span>
+                    </li>
+                {% empty %}
+                    <li class="empty">Задач пока нет</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+    </main>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.body.classList.toggle('sidebar-open');
+}
+</script>
 
 </body>
 </html>
-

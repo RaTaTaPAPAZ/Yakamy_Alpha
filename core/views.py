@@ -11,6 +11,7 @@ from core.services.mcp.parser import parse
 from core.services.mcp.intents import IntentType
 
 from .models import Note, Task, Reminder
+from core.services.mcp.dates import extract_date
 
 @login_required
 def dashboard(request):
@@ -138,41 +139,76 @@ def delete_reminder(request, reminder_id):
 
 @login_required
 def mcp_create(request):
-    if request.method != 'POST':
-        return redirect('dashboard')
-
-    text = request.POST.get('text', '').strip()
-
+    text = request.POST.get("text", "").strip()
     if not text:
-        return redirect('dashboard')
+        return redirect("dashboard")
 
     result = parse(text)
 
-    intent = result["intent"]
-    data = result["data"]
+    if result.missing:
+        request.session["mcp"] = {
+            "intent": result.intent.name,
+            "data": result.data,
+            "missing": result.missing,
+            "question": result.question,
+        }
+        return redirect("dashboard")
+
+    _commit_mcp(request.user, result)
+    request.session.pop("mcp", None)
+    return redirect("dashboard")
 
 
-    if intent == IntentType.NOTE:
-        Note.objects.create(
-            user=request.user,
-            title=data.get('title', '')[:255],
-            content=data.get('content', '')
+@login_required
+def mcp_clarify(request):
+    answer = request.POST.get("answer", "").strip()
+    mcp = request.session.get("mcp")
+
+    if not mcp or not answer:
+        return redirect("dashboard")
+
+    if "date" in mcp["missing"]:
+        from core.services.mcp.dates import extract_date
+        date = extract_date(answer)
+
+        if not date:
+            mcp["question"] = "Я не понял дату, попробуй иначе"
+            request.session["mcp"] = mcp
+            return redirect("dashboard")
+
+        mcp["data"]["remind_at"] = date
+        mcp["missing"].remove("date")
+
+    if not mcp["missing"]:
+        from core.services.mcp.types import MCPResult
+        from core.services.mcp.intents import IntentType
+
+        result = MCPResult(
+            intent=IntentType[mcp["intent"]],
+            data=mcp["data"],
+            missing=[]
         )
+        _commit_mcp(request.user, result)
+        request.session.pop("mcp", None)
 
-    elif intent == IntentType.TASK:
-        Task.objects.create(
-            user=request.user,
-            title=data.get('title', '')[:255],
-            description=data.get('description', '')
-        )
-
-    elif intent == IntentType.REMINDER:
+    return redirect("dashboard")
+def _commit_mcp(user, result):
+    if result.intent.name == "REMINDER":
         Reminder.objects.create(
-            user=request.user,
-            text=data.get("text", ""),
-            remind_at=data.get("date")
+            user=user,
+            text=result.data["text"],
+            remind_at=result.data["remind_at"]
         )
 
+    if result.intent.name == "TASK":
+        Task.objects.create(
+            user=user,
+            title=result.data.get("title", result.data.get("text", "")),
+        )
 
-
-    return redirect('dashboard')
+    if result.intent.name == "NOTE":
+        Note.objects.create(
+            user=user,
+            title=result.data.get("title", "Заметка"),
+            content=result.data.get("text", "")
+        )

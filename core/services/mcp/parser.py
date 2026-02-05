@@ -1,51 +1,16 @@
-import re
-from .intents import IntentType
-from .dates import extract_date
-
-
-REMINDER_KEYWORDS = [
-    'напомни',
-    'напоминание',
-    'напомнить',
-]
-
-TASK_KEYWORDS = [
-    'задача',
-    'сделать',
-    'выполнить',
-    'нужно',
-]
-
-
-def detect_intent(text: str) -> IntentType:
-    lowered = text.lower()
-
-    for word in REMINDER_KEYWORDS:
-        if word in lowered:
-            return IntentType.REMINDER
-
-    for word in TASK_KEYWORDS:
-        if word in lowered:
-            return IntentType.TASK
-
-    return IntentType.NOTE
-
+from .detect import detect_intent
 from .handlers import handle_note, handle_task, handle_reminder
+from .types import MCPResult
+from .intents import IntentType
 
-
-def parse(text: str) -> dict:
+def parse(text: str) -> MCPResult:
     intent = detect_intent(text)
 
     if intent == IntentType.REMINDER:
-        data = handle_reminder(text)
-    elif intent == IntentType.TASK:
-        data = handle_task(text)
-    else:
-        data = handle_note(text)
+        return handle_reminder(text)
 
-    return {
-        "intent": intent,
-        "data": data
-    }
+    if intent == IntentType.TASK:
+        return handle_task(text)
 
+    return handle_note(text)
 
