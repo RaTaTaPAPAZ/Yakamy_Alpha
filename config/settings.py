@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -121,3 +122,8 @@ STATIC_URL = 'static/'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+OPENCLOW_API_URL = os.getenv('OPENCLOW_API_URL', 'https://api.openai.com/v1/chat/completions')
+OPENCLOW_API_TOKEN = os.getenv('OPENCLOW_API_TOKEN', '')
+OPENCLOW_MODEL = os.getenv('OPENCLOW_MODEL', 'gpt-4o-mini')
+OPENCLOW_TIMEOUT_SECONDS = int(os.getenv('OPENCLOW_TIMEOUT_SECONDS', '20'))

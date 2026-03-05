@@ -2,13 +2,14 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from .models import Note, Task, Reminder
 from django.shortcuts import redirect
+from django.http import JsonResponse
 from .forms.note_forms import NoteForm
 from django.shortcuts import get_object_or_404
 from .forms.task_forms import TaskForm
 from .forms.reminder_form import ReminderForm
 
 from core.services.mcp.parser import parse
-from core.services.mcp.intents import IntentType
+from core.services.agents.openclow import ask_openclow, OpenClowError
 
 from .models import Note, Task, Reminder
 from core.services.mcp.dates import extract_date
@@ -212,3 +213,20 @@ def _commit_mcp(user, result):
             title=result.data.get("title", "Заметка"),
             content=result.data.get("text", "")
         )
+
+
+@login_required
+def openclow_agent(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed.'}, status=405)
+
+    prompt = request.POST.get('prompt', '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'Prompt is required.'}, status=400)
+
+    try:
+        answer = ask_openclow(prompt)
+    except OpenClowError as exc:
+        return JsonResponse({'error': str(exc)}, status=400)
+
+    return JsonResponse({'answer': answer})
