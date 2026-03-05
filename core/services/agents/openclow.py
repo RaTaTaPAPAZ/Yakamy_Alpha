@@ -1,4 +1,5 @@
 import json
+import socket
 from urllib import request
 from urllib.error import HTTPError, URLError
 
@@ -7,6 +8,29 @@ from django.conf import settings
 
 class OpenClowError(Exception):
     """Raised when OpenClow integration cannot complete a request."""
+
+
+def _extract_content(parsed_response: dict) -> str:
+    try:
+        message_content = parsed_response["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as exc:
+        raise OpenClowError("OpenClow API returned an unexpected response format.") from exc
+
+    if isinstance(message_content, str):
+        content = message_content.strip()
+    elif isinstance(message_content, list):
+        text_parts = []
+        for item in message_content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                text_parts.append(item.get("text", ""))
+        content = "".join(text_parts).strip()
+    else:
+        raise OpenClowError("OpenClow API returned an unexpected response format.")
+
+    if not content:
+        raise OpenClowError("OpenClow API returned an empty answer.")
+
+    return content
 
 
 def ask_openclow(prompt: str) -> str:
@@ -42,14 +66,12 @@ def ask_openclow(prompt: str) -> str:
         raise OpenClowError(f"OpenClow API HTTP error {exc.code}: {error_body}") from exc
     except URLError as exc:
         raise OpenClowError(f"OpenClow API network error: {exc.reason}") from exc
+    except socket.timeout as exc:
+        raise OpenClowError("OpenClow API request timed out.") from exc
 
     try:
-        parsed = json.loads(raw_response)
-        content = parsed["choices"][0]["message"]["content"].strip()
-    except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
-        raise OpenClowError("OpenClow API returned an unexpected response format.") from exc
+        parsed_response = json.loads(raw_response)
+    except json.JSONDecodeError as exc:
+        raise OpenClowError("OpenClow API returned invalid JSON.") from exc
 
-    if not content:
-        raise OpenClowError("OpenClow API returned an empty answer.")
-
-    return content
+    return _extract_content(parsed_response)

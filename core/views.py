@@ -1,18 +1,15 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Note, Task, Reminder
-from django.shortcuts import redirect
 from django.http import JsonResponse
-from .forms.note_forms import NoteForm
-from django.shortcuts import get_object_or_404
-from .forms.task_forms import TaskForm
-from .forms.reminder_form import ReminderForm
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
+from core.services.agents.openclow import OpenClowError, ask_openclow
 from core.services.mcp.parser import parse
-from core.services.agents.openclow import ask_openclow, OpenClowError
 
-from .models import Note, Task, Reminder
-from core.services.mcp.dates import extract_date
+from .forms.note_forms import NoteForm
+from .forms.reminder_form import ReminderForm
+from .forms.task_forms import TaskForm
+from .models import Note, Reminder, Task
 
 @login_required
 def dashboard(request):
@@ -216,10 +213,8 @@ def _commit_mcp(user, result):
 
 
 @login_required
+@require_POST
 def openclow_agent(request):
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed.'}, status=405)
-
     prompt = request.POST.get('prompt', '').strip()
     if not prompt:
         return JsonResponse({'error': 'Prompt is required.'}, status=400)
@@ -227,6 +222,6 @@ def openclow_agent(request):
     try:
         answer = ask_openclow(prompt)
     except OpenClowError as exc:
-        return JsonResponse({'error': str(exc)}, status=400)
+        return JsonResponse({'error': str(exc)}, status=502)
 
-    return JsonResponse({'answer': answer})
+    return JsonResponse({'answer': answer}, status=200)
