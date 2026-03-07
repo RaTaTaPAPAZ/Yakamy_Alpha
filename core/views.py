@@ -1,17 +1,15 @@
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Note, Task, Reminder
-from django.shortcuts import redirect
-from .forms.note_forms import NoteForm
-from django.shortcuts import get_object_or_404
-from .forms.task_forms import TaskForm
-from .forms.reminder_form import ReminderForm
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
+from core.services.agents.openclow import OpenClowError, ask_openclow
 from core.services.mcp.parser import parse
-from core.services.mcp.intents import IntentType
 
-from .models import Note, Task, Reminder
-from core.services.mcp.dates import extract_date
+from .forms.note_forms import NoteForm
+from .forms.reminder_form import ReminderForm
+from .forms.task_forms import TaskForm
+from .models import Note, Reminder, Task
 
 @login_required
 def dashboard(request):
@@ -212,3 +210,18 @@ def _commit_mcp(user, result):
             title=result.data.get("title", "Заметка"),
             content=result.data.get("text", "")
         )
+
+
+@login_required
+@require_POST
+def openclow_agent(request):
+    prompt = request.POST.get('prompt', '').strip()
+    if not prompt:
+        return JsonResponse({'error': 'Prompt is required.'}, status=400)
+
+    try:
+        answer = ask_openclow(prompt)
+    except OpenClowError as exc:
+        return JsonResponse({'error': str(exc)}, status=502)
+
+    return JsonResponse({'answer': answer}, status=200)

@@ -33,4 +33,6 @@ urlpatterns = [
 
     path("mcp/clarify/", views.mcp_clarify, name="mcp_clarify"),
 
+    path('agents/openclow/', views.openclow_agent, name='openclow_agent'),
+
 ]
